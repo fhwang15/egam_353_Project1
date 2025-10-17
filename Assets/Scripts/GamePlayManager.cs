@@ -15,20 +15,38 @@ public class GamePlayManager : MonoBehaviour
     public Transform orderContainer;
     public GameObject orderCardPrefab;
     public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI timerText;
+    public TextMeshProUGUI totalTimerText; //Total Time of the game
+    public TextMeshProUGUI timerText; //Order Timer
 
     private List<Order> activeOrders = new List<Order>();
     private int maxOrders = 5;
     private int totalOrdersCreated = 0;
     private int currentScore = 0;
 
-    public float orderSpawnInterval = 3f; // create order per 5s
+    public float totalTimer;
+    public float orderSpawnInterval; // create order per sec
     private float nextOrderTime;
+
+    public MeshRenderer PanBurner;
+    public MeshRenderer PotBurner;
+
+    //Materials
+    public Material PancakePressed;
+    public Material PancakeReleased;
+
+
+    public Material NoodleConnected;
+    public Material NoodleReleased;
+
 
     Keyboard kbd;
 
     void Start()
     {
+        //Original Color of the burners
+        PancakeReleased = PanBurner.material;
+        NoodleReleased = PotBurner.material;
+
         kbd = Keyboard.current;
         nextOrderTime = orderSpawnInterval;
 
@@ -40,11 +58,15 @@ public class GamePlayManager : MonoBehaviour
 
     void Update()
     {
+
+        totalTimer -= Time.deltaTime;
+        totalTimerText.text = totalTimer.ToString();
+
         // time left for Next order
         if (totalOrdersCreated < maxOrders)
         {
             nextOrderTime -= Time.deltaTime;
-            timerText.text = $"Timer: {Mathf.Max(0, nextOrderTime):F1}s";
+            timerText.text = $"Next Order Coming in... {Mathf.Max(0, nextOrderTime):F1}s";
 
             // new order
             if (nextOrderTime <= 0)
@@ -55,19 +77,29 @@ public class GamePlayManager : MonoBehaviour
         }
         else
         {
-            timerText.text = "Timer: 0.0s";
+            timerText.text = "Order Full!";
         }
 
         // Flipping pancake input
         if (Input.GetKeyDown(KeyCode.A))
         {
+            PanBurner.material = PancakePressed;
             ProcessPancakeFlip();
+
+        } else if (Input.GetKeyUp(KeyCode.A))
+        {
+            PanBurner.material = PancakeReleased;
         }
 
         //Cooking the noodle input
         if (Input.GetKey(KeyCode.D))
         {
+            PotBurner.material = NoodleConnected;
             ProcessNoodleCooking();
+        }
+        else
+        {
+            PotBurner.material = NoodleReleased;
         }
     }
 
