@@ -1,0 +1,20 @@
+{
+    "recipes": [
+        {
+            "recipeID": 1,
+            "name": "Classic Pancake",
+            "type": 0,
+            "minFlips": 3,
+            "maxFlips": 7
+        },
+        {
+            "recipeID": 2,
+            "name": "Spicy Noodle",
+            "type": 1,
+            "minTemp": 1,
+            "maxTemp": 5,
+            "minCookTime": 3,
+            "maxCookTime": 5
+        }
+    ]
+}
