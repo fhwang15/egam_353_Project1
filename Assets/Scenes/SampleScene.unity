@@ -262,7 +262,7 @@ MonoBehaviour:
   scoreText: {fileID: 1328104077}
   totalTimerText: {fileID: 235220912}
   timerText: {fileID: 1364558059}
-  totalTimer: 180
+  totalTimer: 60
   orderSpawnInterval: 3
   PanBurner: {fileID: 1273877840}
   PotBurner: {fileID: 909728348}
@@ -297,8 +297,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08131ecd3e7146946bde6a3fbcb3caea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TemperatureControll
-  maxTemp: 0
-  currentTemp: 0
+  maxTemp: 5
+  currentTemp: 1
   temperatureText: {fileID: 470318040}
 --- !u!1 &235220910
 GameObject:

@@ -21,11 +21,14 @@ public class GamePlayManager : MonoBehaviour
     private List<Order> activeOrders = new List<Order>();
     private int maxOrders = 5;
     private int totalOrdersCreated = 0;
+    private int totalOrdersCompleted = 0;
     private int currentScore = 0;
 
     public float totalTimer;
     public float orderSpawnInterval; // create order per sec
     private float nextOrderTime;
+
+    private bool gameIsOver;
 
     public MeshRenderer PanBurner;
     public MeshRenderer PotBurner;
@@ -43,6 +46,9 @@ public class GamePlayManager : MonoBehaviour
 
     void Start()
     {
+
+        gameIsOver = false;
+
         //Original Color of the burners
         PancakeReleased = PanBurner.material;
         NoodleReleased = PotBurner.material;
@@ -58,35 +64,38 @@ public class GamePlayManager : MonoBehaviour
 
     void Update()
     {
+        if (gameIsOver) return;
 
+        //Timer of the game
         totalTimer -= Time.deltaTime;
-        totalTimerText.text = totalTimer.ToString();
+        totalTimerText.text = $"Time: {Mathf.Max(0, totalTimer):F1}s";
 
-        // time left for Next order
-        if (totalOrdersCreated < maxOrders)
+        if (totalTimer <= 0)
         {
-            nextOrderTime -= Time.deltaTime;
-            timerText.text = $"Next Order Coming in... {Mathf.Max(0, nextOrderTime):F1}s";
+            GameOver();
+            return;
+        }
 
-            // new order
-            if (nextOrderTime <= 0)
-            {
-                CreateNewOrder();
-                nextOrderTime = orderSpawnInterval;
-            }
-        }
-        else
+        // Time left for next order
+        nextOrderTime -= Time.deltaTime;
+        timerText.text = $"Next Order Coming in... {Mathf.Max(0, nextOrderTime):F1}s";
+
+        // Create new orders when less than 5 orders are on the screen
+        if (nextOrderTime <= 0 && activeOrders.Count < maxOrders)
         {
-            timerText.text = "Order Full!";
+            CreateNewOrder();
+            nextOrderTime = orderSpawnInterval;
         }
+
+        UpdateAllNoodleUI();
 
         // Flipping pancake input
         if (Input.GetKeyDown(KeyCode.A))
         {
             PanBurner.material = PancakePressed;
             ProcessPancakeFlip();
-
-        } else if (Input.GetKeyUp(KeyCode.A))
+        }
+        else if (Input.GetKeyUp(KeyCode.A))
         {
             PanBurner.material = PancakeReleased;
         }
@@ -105,11 +114,10 @@ public class GamePlayManager : MonoBehaviour
 
     void CreateNewOrder()
     {
-        if (totalOrdersCreated >= maxOrders) return;
+        if (activeOrders.Count >= maxOrders) return; //Will not create if there are 5 orders
 
         Order newOrder = new Order();
         newOrder.recipe = recipeManager.GetRandomRecipe();
-
 
         if (newOrder.recipe.type == RecipeType.pancake)
         {
@@ -121,7 +129,7 @@ public class GamePlayManager : MonoBehaviour
             newOrder.requiredTime = recipeManager.GetRandomCookTime(newOrder.recipe);
         }
 
-        // UI 생성
+        // Creatnig ui
         GameObject orderCard = Instantiate(orderCardPrefab, orderContainer);
         newOrder.orderUI = orderCard;
         newOrder.uiTexts = orderCard.GetComponentsInChildren<TextMeshProUGUI>();
@@ -129,9 +137,6 @@ public class GamePlayManager : MonoBehaviour
         UpdateOrderUI(newOrder);
 
         activeOrders.Add(newOrder);
-        totalOrdersCreated++;
-
-        Debug.Log($"new Order: {newOrder.recipe.name} ({totalOrdersCreated}/{maxOrders})");
     }
 
     void UpdateOrderUI(Order order)
@@ -144,18 +149,39 @@ public class GamePlayManager : MonoBehaviour
             order.uiTexts[1].text = $"Flip: {order.currentProgress}/{order.requiredFlips}";
             order.uiTexts[2].text = "Press A when pan touches!";
         }
-        else
+        else  // Noodle recipe
         {
             order.uiTexts[0].text = order.recipe.name;
-            order.uiTexts[1].text = $"Temp: {order.requiredTemp}°C (Now: {temperatureController.currentTemp}°C)";  // ← 현재 온도 표시
-            order.uiTexts[2].text = $"Hold D: {order.cookingProgress:F1}s / {order.requiredTime}s";  // ← 진행도 표시
+
+            int tempDiff = temperatureController.currentTemp - order.requiredTemp;
+            Debug.Log($"temperatureController.currentTemp = {temperatureController.currentTemp}");
+
+
+            order.uiTexts[1].text = $"Temp: {order.requiredTemp}°C (Now: {temperatureController.currentTemp}°C)";
+
+            // color of the text
+            if (Mathf.Abs(tempDiff) <= 0)
+            {
+                // Perfect:Green
+                order.uiTexts[1].color = Color.green;
+            }
+            else if (tempDiff > 1)
+            {
+                // Too high: Red
+                order.uiTexts[1].color = Color.red;
+            }
+            else // tempDiff < -1
+            {
+                // Too low: Cyan
+                order.uiTexts[1].color = Color.cyan;
+            }
+
+            order.uiTexts[2].text = $"Hold D: {order.cookingProgress:F1}s / {order.requiredTime}s";
         }
     }
 
     void ProcessPancakeFlip()
     {
-
-        // 모든 주문 출력
         for (int i = 0; i < activeOrders.Count; i++)
         {
             Order order = activeOrders[i];
@@ -184,56 +210,96 @@ public class GamePlayManager : MonoBehaviour
 
     void ProcessNoodleCooking()
     {
-        // 첫 번째 누들 주문 찾기
         Order noodleOrder = activeOrders.Find(o => o.recipe.type == RecipeType.noodle);
 
         if (noodleOrder != null)
         {
             int currentTemp = temperatureController.currentTemp;
+            int tempDiff = currentTemp - noodleOrder.requiredTemp;
 
-            // 온도가 맞는지 체크 (±1 허용)
-            if (Mathf.Abs(currentTemp - noodleOrder.requiredTemp) <= 1)
+            
+            if (Mathf.Abs(tempDiff) <= 0)
             {
-                // 온도가 맞으면 조리 시간 증가
-                noodleOrder.cookingProgress += Time.deltaTime;
-                UpdateOrderUI(noodleOrder);
-
-                // 목표 시간 도달하면 완료
-                if (noodleOrder.cookingProgress >= noodleOrder.requiredTime)
-                {
-                    CompleteOrder(noodleOrder);
-                }
+                noodleOrder.cookingQuality = CookingQuality.Perfect;
+            }
+            else if (tempDiff > 1)
+            {
+                noodleOrder.cookingQuality = CookingQuality.TooHot;
             }
             else
             {
-                // 온도가 안 맞으면 UI만 업데이트 (경고 표시용)
-                UpdateOrderUI(noodleOrder);
+                noodleOrder.cookingQuality = CookingQuality.TooCold;
+            }
+
+            noodleOrder.cookingProgress += Time.deltaTime;
+            UpdateOrderUI(noodleOrder);
+
+            if (noodleOrder.cookingProgress >= noodleOrder.requiredTime)
+            {
+                CompleteOrder(noodleOrder);
+            }
+        }
+    }
+
+
+    void UpdateAllNoodleUI()
+    {
+        // Update all noodle related UI
+        foreach (Order order in activeOrders)
+        {
+            if (order.recipe.type == RecipeType.noodle)
+            {
+                UpdateOrderUI(order);
             }
         }
     }
 
     void CompleteOrder(Order order)
     {
-        currentScore += 100;
+        int completeScore = 100; // 기본 점수
+
+        // if its noodle, it will depend on the quality (enum) of your cooking. 
+        if (order.recipe.type == RecipeType.noodle)
+        {
+            switch (order.cookingQuality)
+            {
+                case CookingQuality.Perfect:
+                    completeScore = 100;
+                    break;
+                case CookingQuality.TooHot:
+                    completeScore = 50;
+                    break;
+                case CookingQuality.TooCold:
+                    completeScore = 50;
+                    break;
+            }
+        }
+
+        currentScore += completeScore;
+        totalOrdersCompleted++;
         scoreText.text = $"Score: {currentScore}";
 
         activeOrders.Remove(order);
         Destroy(order.orderUI);
-
-        Debug.Log($"Order Complete/ # of left orders: {activeOrders.Count}");
-
-        // Check for game over
-        if (totalOrdersCreated >= maxOrders && activeOrders.Count == 0)
-        {
-            GameOver();
-        }
     }
 
     void GameOver()
     {
-        Debug.Log($"Game Over! Final Score: {currentScore}");
-        timerText.text = "GAME OVER!";
+        gameIsOver = true;
 
+        totalTimerText.text = "TIME'S UP!";
+        timerText.text = $"Orders Completed: {totalOrdersCompleted}";
+
+        Debug.Log($"=== GAME OVER ===");
+        Debug.Log($"Final Score: {currentScore}");
+        Debug.Log($"Orders Completed: {totalOrdersCompleted}");
+
+        // Get rid of all 
+        foreach (Order order in activeOrders)
+        {
+            Destroy(order.orderUI);
+        }
+        activeOrders.Clear();
 
     }
 }

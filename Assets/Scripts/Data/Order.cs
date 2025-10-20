@@ -12,6 +12,15 @@ public class Order
     public int requiredTime;
     public float cookingProgress = 0f;
 
+    public CookingQuality cookingQuality = CookingQuality.Perfect;
+
     public GameObject orderUI;
     public TextMeshProUGUI[] uiTexts;
+}
+
+public enum CookingQuality
+{
+    Perfect,  
+    TooHot,   
+    TooCold  
 }

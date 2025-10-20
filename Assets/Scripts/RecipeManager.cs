@@ -22,16 +22,6 @@ public class RecipeManager : MonoBehaviour
     {
         TextAsset jsonFile = Resources.Load<TextAsset>("recipes");
         recipeList = JsonUtility.FromJson<RecipeList>(jsonFile.text);
-
-        Debug.Log($"JSON 파일 내용: {jsonFile.text}");
-
-        if (recipeList == null || recipeList.recipes == null)
-        {
-            Debug.LogError("JSON 파싱 실패!");
-            return;
-        }
-
-        Debug.Log($"레시피 {recipeList.recipes.Length}개 로드 완료!");
     }
 
     public recipe GetRandomRecipe()
