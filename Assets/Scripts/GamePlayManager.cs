@@ -30,14 +30,20 @@ public class GamePlayManager : MonoBehaviour
     private float nextOrderTime;
 
     private bool gameIsOver;
-
+    
+    //pancake animation shit
     public RectTransform pancakeImage;
     private Vector2 pancakeOriginalPos; 
     public float pancakeJumpHeight = 100f; 
     public float pancakeJumpSpeed = 10f; 
 
     private bool isPancakeFlipping = false;
-    private Vector2 pancakeTargetPos; 
+    private Vector2 pancakeTargetPos;
+
+    //noodle shit
+    public Image noodleImage;
+    public Image noodleOverlay;
+    public Color noodleCookColor = new Color();
 
     void Start()
     {
@@ -56,6 +62,13 @@ public class GamePlayManager : MonoBehaviour
         {
             pancakeOriginalPos = pancakeImage.anchoredPosition;
             pancakeTargetPos = pancakeOriginalPos;
+        }
+
+        if (noodleOverlay != null)
+        {
+            Color overlayColor = noodleCookColor;
+            overlayColor.a = 0f;
+            noodleOverlay.color = overlayColor;
         }
 
     }
@@ -94,10 +107,11 @@ public class GamePlayManager : MonoBehaviour
             nextOrderTime = orderSpawnInterval;
         }
 
+        UpdateNoodleCookingVisual();
         UpdateAllNoodleUI();
 
         // Flipping pancake input
-        if (Input.GetKeyDown(KeyCode.A))
+        if (Input.GetKeyDown(KeyCode.T))
         {
             // small animation
             if (pancakeImage != null)
@@ -107,7 +121,7 @@ public class GamePlayManager : MonoBehaviour
 
             ProcessPancakeFlip();
         }
-        else if (Input.GetKeyUp(KeyCode.A))
+        else if (Input.GetKeyUp(KeyCode.T))
         { 
 
             // Back to its position
@@ -118,7 +132,7 @@ public class GamePlayManager : MonoBehaviour
         }
 
         //Cooking the noodle input
-        if (Input.GetKey(KeyCode.D))
+        if (Input.GetKey(KeyCode.U))
         {
             ProcessNoodleCooking();
         }
@@ -266,6 +280,28 @@ public class GamePlayManager : MonoBehaviour
             {
                 UpdateOrderUI(order);
             }
+        }
+    }
+
+    void UpdateNoodleCookingVisual()
+    {
+        if (noodleOverlay == null) return;
+
+        Order noodleOrder = activeOrders.Find(o => o.recipe.type == RecipeType.noodle);
+
+        if (noodleOrder != null)
+        {
+            float cookProgress = Mathf.Clamp01(noodleOrder.cookingProgress / noodleOrder.requiredTime);
+
+            Color overlayColor = noodleCookColor;
+            overlayColor.a = cookProgress * 0.3f;
+            noodleOverlay.color = overlayColor;
+        }
+        else
+        {
+            Color overlayColor = noodleCookColor;
+            overlayColor.a = 0f;
+            noodleOverlay.color = overlayColor;
         }
     }
 

@@ -22,7 +22,7 @@ public class TemperatureControll : MonoBehaviour
     {
         temperatureText.text = currentTemp.ToString();
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.W))
         {
             isTurned = true;
 
