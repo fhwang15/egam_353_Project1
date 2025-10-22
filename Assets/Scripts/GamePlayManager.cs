@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.Rendering;
 using UnityEngine.InputSystem;
 using UnityEngine.SocialPlatforms.Impl;
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class GamePlayManager : MonoBehaviour
@@ -30,19 +31,13 @@ public class GamePlayManager : MonoBehaviour
 
     private bool gameIsOver;
 
-    public MeshRenderer PanBurner;
-    public MeshRenderer PotBurner;
+    public RectTransform pancakeImage;
+    private Vector2 pancakeOriginalPos; 
+    public float pancakeJumpHeight = 100f; 
+    public float pancakeJumpSpeed = 10f; 
 
-    //Materials
-    public Material PancakePressed;
-    public Material PancakeReleased;
-
-
-    public Material NoodleConnected;
-    public Material NoodleReleased;
-
-
-    Keyboard kbd;
+    private bool isPancakeFlipping = false;
+    private Vector2 pancakeTargetPos; 
 
     void Start()
     {
@@ -50,16 +45,19 @@ public class GamePlayManager : MonoBehaviour
         gameIsOver = false;
 
         //Original Color of the burners
-        PancakeReleased = PanBurner.material;
-        NoodleReleased = PotBurner.material;
-
-        kbd = Keyboard.current;
         nextOrderTime = orderSpawnInterval;
 
         scoreText.text = "Score: 0";
 
         // first order
         CreateNewOrder();
+
+        if (pancakeImage != null)
+        {
+            pancakeOriginalPos = pancakeImage.anchoredPosition;
+            pancakeTargetPos = pancakeOriginalPos;
+        }
+
     }
 
     void Update()
@@ -74,6 +72,15 @@ public class GamePlayManager : MonoBehaviour
         {
             GameOver();
             return;
+        }
+
+        if (pancakeImage != null)
+        {
+            pancakeImage.anchoredPosition = Vector2.Lerp(
+                pancakeImage.anchoredPosition,
+                pancakeTargetPos,
+                Time.deltaTime * pancakeJumpSpeed
+            );
         }
 
         // Time left for next order
@@ -92,23 +99,31 @@ public class GamePlayManager : MonoBehaviour
         // Flipping pancake input
         if (Input.GetKeyDown(KeyCode.A))
         {
-            PanBurner.material = PancakePressed;
+            // small animation
+            if (pancakeImage != null)
+            {
+                pancakeTargetPos = pancakeOriginalPos + new Vector2(0, pancakeJumpHeight);
+            }
+
             ProcessPancakeFlip();
         }
         else if (Input.GetKeyUp(KeyCode.A))
-        {
-            PanBurner.material = PancakeReleased;
+        { 
+
+            // Back to its position
+            if (pancakeImage != null)
+            {
+                pancakeTargetPos = pancakeOriginalPos;
+            }
         }
 
         //Cooking the noodle input
         if (Input.GetKey(KeyCode.D))
         {
-            PotBurner.material = NoodleConnected;
             ProcessNoodleCooking();
         }
         else
         {
-            PotBurner.material = NoodleReleased;
         }
     }
 
