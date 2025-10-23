@@ -57,6 +57,7 @@ public class GamePlayManager : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip pancakeJumpSound;
     public AudioClip noodleCookingSound;
+    public AudioClip orderCompleteSound;
 
     void Start()
     {
@@ -177,8 +178,8 @@ public class GamePlayManager : MonoBehaviour
             audioSource.Stop();
         }
 
-        // Restart game with R key
-        if (Input.GetKeyDown(KeyCode.R))
+        // Restart game with Space key
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             RestartGame();
         }
@@ -395,6 +396,9 @@ public class GamePlayManager : MonoBehaviour
         totalOrdersCompleted++;
         scoreText.text = $"Score: {currentScore}";
 
+        // Play order complete sound
+        PlayOrderCompleteSound();
+
         activeOrders.Remove(order);
         if (order.orderUI != null) Destroy(order.orderUI);
     }
@@ -437,9 +441,17 @@ public class GamePlayManager : MonoBehaviour
         }
     }
 
+    void PlayOrderCompleteSound()
+    {
+        if (audioSource != null && orderCompleteSound != null)
+        {
+            audioSource.PlayOneShot(orderCompleteSound);
+        }
+    }
+
     void RestartGame()
     {
-        Debug.Log("Restarting game via R key...");
+        Debug.Log("Restarting game via Space key...");
         
         // Reset time scale
         Time.timeScale = 1f;

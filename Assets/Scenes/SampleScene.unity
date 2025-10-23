@@ -353,6 +353,7 @@ MonoBehaviour:
   audioSource: {fileID: 173602840}
   pancakeJumpSound: {fileID: 8300000, guid: da047c34ec6fea644bdf151ddcd6378f, type: 3}
   noodleCookingSound: {fileID: 8300000, guid: b374c11bc9d54e942abb8431855cf391, type: 3}
+  orderCompleteSound: {fileID: 8300000, guid: d342ab55600a6524da8f07fa45f7e831, type: 3}
 --- !u!4 &173602836
 Transform:
   m_ObjectHideFlags: 0
@@ -2327,7 +2328,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2057540042
 RectTransform:
   m_ObjectHideFlags: 0
