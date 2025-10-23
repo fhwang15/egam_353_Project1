@@ -16,6 +16,7 @@ public class Order
 
     public GameObject orderUI;
     public TextMeshProUGUI[] uiTexts;
+    public UnityEngine.UI.Image orderImage;
 }
 
 public enum CookingQuality

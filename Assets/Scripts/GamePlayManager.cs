@@ -8,7 +8,6 @@ using System.Collections.Generic;
 
 public class GamePlayManager : MonoBehaviour
 {
-
     public RecipeManager recipeManager;
     public TemperatureControll temperatureController;
 
@@ -16,8 +15,8 @@ public class GamePlayManager : MonoBehaviour
     public Transform orderContainer;
     public GameObject orderCardPrefab;
     public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI totalTimerText; //Total Time of the game
-    public TextMeshProUGUI timerText; //Order Timer
+    public TextMeshProUGUI totalTimerText; // Total Time of the game
+    public TextMeshProUGUI timerText;      // Order Timer
 
     private List<Order> activeOrders = new List<Order>();
     private int maxOrders = 5;
@@ -30,27 +29,40 @@ public class GamePlayManager : MonoBehaviour
     private float nextOrderTime;
 
     private bool gameIsOver;
-    
-    //pancake animation shit
+
+    // pancake animation
     public RectTransform pancakeImage;
-    private Vector2 pancakeOriginalPos; 
-    public float pancakeJumpHeight = 100f; 
-    public float pancakeJumpSpeed = 10f; 
+    private Vector2 pancakeOriginalPos;
+    public float pancakeJumpHeight = 100f;
+    public float pancakeJumpSpeed = 10f;
 
     private bool isPancakeFlipping = false;
     private Vector2 pancakeTargetPos;
+    private float pancakeRotation = 0f;
+    private float pancakeRotationSpeed = 360f; // degrees per second
 
-    //noodle shit
+    // NEW: remember last-frame T state (for edge detection)
+    private bool wasTPressed = false;
+
+    // noodle
     public Image noodleImage;
     public Image noodleOverlay;
     public Color noodleCookColor = new Color();
 
+    // order images
+    public Sprite pancakeOrderSprite;
+    public Sprite noodleOrderSprite;
+
+    // audio
+    public AudioSource audioSource;
+    public AudioClip pancakeJumpSound;
+    public AudioClip noodleCookingSound;
+
     void Start()
     {
-
         gameIsOver = false;
 
-        //Original Color of the burners
+        // next order timer
         nextOrderTime = orderSpawnInterval;
 
         scoreText.text = "Score: 0";
@@ -70,14 +82,13 @@ public class GamePlayManager : MonoBehaviour
             overlayColor.a = 0f;
             noodleOverlay.color = overlayColor;
         }
-
     }
 
     void Update()
     {
         if (gameIsOver) return;
 
-        //Timer of the game
+        // Game total timer
         totalTimer -= Time.deltaTime;
         totalTimerText.text = $"Time: {Mathf.Max(0, totalTimer):F1}s";
 
@@ -87,6 +98,7 @@ public class GamePlayManager : MonoBehaviour
             return;
         }
 
+        // Pancake UI movement + rotation
         if (pancakeImage != null)
         {
             pancakeImage.anchoredPosition = Vector2.Lerp(
@@ -94,13 +106,19 @@ public class GamePlayManager : MonoBehaviour
                 pancakeTargetPos,
                 Time.deltaTime * pancakeJumpSpeed
             );
+
+            if (isPancakeFlipping)
+            {
+                pancakeRotation += pancakeRotationSpeed * Time.deltaTime;
+                pancakeImage.rotation = Quaternion.Euler(pancakeRotation, 0, 0);
+            }
         }
 
-        // Time left for next order
+        // next order countdown
         nextOrderTime -= Time.deltaTime;
         timerText.text = $"Next Order Coming in... {Mathf.Max(0, nextOrderTime):F1}s";
 
-        // Create new orders when less than 5 orders are on the screen
+        // spawn new order if room
         if (nextOrderTime <= 0 && activeOrders.Count < maxOrders)
         {
             CreateNewOrder();
@@ -110,40 +128,65 @@ public class GamePlayManager : MonoBehaviour
         UpdateNoodleCookingVisual();
         UpdateAllNoodleUI();
 
-        // Flipping pancake input
-        if (Input.GetKeyDown(KeyCode.T))
+        // ========= Inverted pancake input logic =========
+        bool isTPressed = Input.GetKey(KeyCode.T);
+
+        if (!isTPressed)
         {
-            // small animation
+            // No input -> pancake jumps up and spins
             if (pancakeImage != null)
             {
                 pancakeTargetPos = pancakeOriginalPos + new Vector2(0, pancakeJumpHeight);
+                isPancakeFlipping = true;
+                // keep spinning; do not reset rotation each frame
             }
 
-            ProcessPancakeFlip();
-        }
-        else if (Input.GetKeyUp(KeyCode.T))
-        { 
-
-            // Back to its position
-            if (pancakeImage != null)
+            // Only count a flip once when transitioning from pressed -> not pressed
+            if (wasTPressed)
             {
-                pancakeTargetPos = pancakeOriginalPos;
+                ProcessPancakeFlip();
+                pancakeRotation = 0f; // optional: restart the spin cycle each counted flip
+                
+                // Play pancake jump sound
+                PlayPancakeJumpSound();
             }
-        }
-
-        //Cooking the noodle input
-        if (Input.GetKey(KeyCode.U))
-        {
-            ProcessNoodleCooking();
         }
         else
         {
+            // Holding input -> return to rest and stop spinning
+            if (pancakeImage != null)
+            {
+                pancakeTargetPos = pancakeOriginalPos;
+                isPancakeFlipping = false;
+                pancakeImage.rotation = Quaternion.identity;
+            }
+        }
+
+        wasTPressed = isTPressed;
+        // ========= End inverted logic =========
+
+        // Noodle cooking input - requires both U and = keys
+        if (Input.GetKey(KeyCode.U) && Input.GetKey(KeyCode.Equals))
+        {
+            ProcessNoodleCooking();
+            PlayNoodleCookingSound();
+        }
+
+        if (Input.GetKeyUp(KeyCode.Equals))
+        {
+            audioSource.Stop();
+        }
+
+        // Restart game with R key
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            RestartGame();
         }
     }
 
     void CreateNewOrder()
     {
-        if (activeOrders.Count >= maxOrders) return; //Will not create if there are 5 orders
+        if (activeOrders.Count >= maxOrders) return; // do not create if already 5 orders
 
         Order newOrder = new Order();
         newOrder.recipe = recipeManager.GetRandomRecipe();
@@ -158,14 +201,16 @@ public class GamePlayManager : MonoBehaviour
             newOrder.requiredTime = recipeManager.GetRandomCookTime(newOrder.recipe);
         }
 
-        // Creatnig ui
+        // Create UI
         GameObject orderCard = Instantiate(orderCardPrefab, orderContainer);
         newOrder.orderUI = orderCard;
         newOrder.uiTexts = orderCard.GetComponentsInChildren<TextMeshProUGUI>();
+        newOrder.orderImage = orderCard.GetComponentInChildren<Image>();
 
         UpdateOrderUI(newOrder);
 
         activeOrders.Add(newOrder);
+        totalOrdersCreated++;
     }
 
     void UpdateOrderUI(Order order)
@@ -176,22 +221,28 @@ public class GamePlayManager : MonoBehaviour
         {
             order.uiTexts[0].text = order.recipe.name;
             order.uiTexts[1].text = $"Flip: {order.currentProgress}/{order.requiredFlips}";
-            order.uiTexts[2].text = "Press A when pan touches!";
+            order.uiTexts[2].text = "Flip your pancake!!!";
+            
+            // Set pancake image
+            if (order.orderImage != null && pancakeOrderSprite != null)
+            {
+                order.orderImage.sprite = pancakeOrderSprite;
+            }
         }
-        else  // Noodle recipe
+        else // Noodle
         {
             order.uiTexts[0].text = order.recipe.name;
 
             int tempDiff = temperatureController.currentTemp - order.requiredTemp;
             Debug.Log($"temperatureController.currentTemp = {temperatureController.currentTemp}");
 
+            order.uiTexts[1].text =
+                $"Temp: {order.requiredTemp}\u00B0C (Now: {temperatureController.currentTemp}\u00B0C)";
 
-            order.uiTexts[1].text = $"Temp: {order.requiredTemp}°C (Now: {temperatureController.currentTemp}°C)";
-
-            // color of the text
+            // color
             if (Mathf.Abs(tempDiff) <= 0)
             {
-                // Perfect:Green
+                // Perfect: Green
                 order.uiTexts[1].color = Color.green;
             }
             else if (tempDiff > 1)
@@ -205,21 +256,21 @@ public class GamePlayManager : MonoBehaviour
                 order.uiTexts[1].color = Color.cyan;
             }
 
-            order.uiTexts[2].text = $"Hold D: {order.cookingProgress:F1}s / {order.requiredTime}s";
+            order.uiTexts[2].text =
+                $"Boil for: {order.cookingProgress:F1}s / {order.requiredTime}s";
+            
+            // Set noodle image
+            if (order.orderImage != null && noodleOrderSprite != null)
+            {
+                order.orderImage.sprite = noodleOrderSprite;
+            }
         }
     }
 
     void ProcessPancakeFlip()
     {
-        for (int i = 0; i < activeOrders.Count; i++)
-        {
-            Order order = activeOrders[i];
-        }
-
-        Order pancakeOrder = activeOrders.Find(o =>
-        {
-            return o.recipe.type == RecipeType.pancake;
-        });
+        // find first pancake order
+        Order pancakeOrder = activeOrders.Find(o => o.recipe.type == RecipeType.pancake);
 
         if (pancakeOrder != null)
         {
@@ -233,9 +284,7 @@ public class GamePlayManager : MonoBehaviour
                 CompleteOrder(pancakeOrder);
             }
         }
-
     }
-
 
     void ProcessNoodleCooking()
     {
@@ -246,7 +295,6 @@ public class GamePlayManager : MonoBehaviour
             int currentTemp = temperatureController.currentTemp;
             int tempDiff = currentTemp - noodleOrder.requiredTemp;
 
-            
             if (Mathf.Abs(tempDiff) <= 0)
             {
                 noodleOrder.cookingQuality = CookingQuality.Perfect;
@@ -270,10 +318,8 @@ public class GamePlayManager : MonoBehaviour
         }
     }
 
-
     void UpdateAllNoodleUI()
     {
-        // Update all noodle related UI
         foreach (Order order in activeOrders)
         {
             if (order.recipe.type == RecipeType.noodle)
@@ -293,8 +339,27 @@ public class GamePlayManager : MonoBehaviour
         {
             float cookProgress = Mathf.Clamp01(noodleOrder.cookingProgress / noodleOrder.requiredTime);
 
+            // Make color change more visible
             Color overlayColor = noodleCookColor;
-            overlayColor.a = cookProgress * 0.3f;
+            overlayColor.a = cookProgress * 0.8f; // Increased from 0.3f to 0.8f for more visibility
+            
+            // Add color intensity based on cooking quality
+            if (noodleOrder.cookingQuality == CookingQuality.Perfect)
+            {
+                overlayColor = Color.green;
+                overlayColor.a = cookProgress * 0.6f;
+            }
+            else if (noodleOrder.cookingQuality == CookingQuality.TooHot)
+            {
+                overlayColor = Color.red;
+                overlayColor.a = cookProgress * 0.7f;
+            }
+            else if (noodleOrder.cookingQuality == CookingQuality.TooCold)
+            {
+                overlayColor = Color.cyan;
+                overlayColor.a = cookProgress * 0.7f;
+            }
+            
             noodleOverlay.color = overlayColor;
         }
         else
@@ -307,9 +372,9 @@ public class GamePlayManager : MonoBehaviour
 
     void CompleteOrder(Order order)
     {
-        int completeScore = 100; // 기본 점수
+        int completeScore = 100; // base score
 
-        // if its noodle, it will depend on the quality (enum) of your cooking. 
+        // noodle score by quality
         if (order.recipe.type == RecipeType.noodle)
         {
             switch (order.cookingQuality)
@@ -331,7 +396,7 @@ public class GamePlayManager : MonoBehaviour
         scoreText.text = $"Score: {currentScore}";
 
         activeOrders.Remove(order);
-        Destroy(order.orderUI);
+        if (order.orderUI != null) Destroy(order.orderUI);
     }
 
     void GameOver()
@@ -341,16 +406,55 @@ public class GamePlayManager : MonoBehaviour
         totalTimerText.text = "TIME'S UP!";
         timerText.text = $"Orders Completed: {totalOrdersCompleted}";
 
-        Debug.Log($"=== GAME OVER ===");
+        Debug.Log("=== GAME OVER ===");
         Debug.Log($"Final Score: {currentScore}");
         Debug.Log($"Orders Completed: {totalOrdersCompleted}");
 
-        // Get rid of all 
+        // clear all order UIs
         foreach (Order order in activeOrders)
         {
-            Destroy(order.orderUI);
+            if (order.orderUI != null) Destroy(order.orderUI);
         }
         activeOrders.Clear();
+    }
 
+    void PlayPancakeJumpSound()
+    {
+        if (audioSource != null && pancakeJumpSound != null)
+        {
+            audioSource.PlayOneShot(pancakeJumpSound);
+        }
+    }
+
+    void PlayNoodleCookingSound()
+    {
+        if (audioSource != null && noodleCookingSound != null)
+        {
+            if (audioSource.isPlaying != true)
+            {
+                audioSource.PlayOneShot(noodleCookingSound);
+            }
+        }
+    }
+
+    void RestartGame()
+    {
+        Debug.Log("Restarting game via R key...");
+        
+        // Reset time scale
+        Time.timeScale = 1f;
+        
+        // Get current scene index
+        int currentSceneIndex = UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex;
+        
+        // Check if scene is in Build Settings
+        if (currentSceneIndex < 0)
+        {
+            Debug.LogError("Current scene is not in Build Settings! Please add it to File > Build Settings > Scenes In Build");
+            return;
+        }
+        
+        // Reload scene
+        UnityEngine.SceneManagement.SceneManager.LoadScene(currentSceneIndex);
     }
 }
