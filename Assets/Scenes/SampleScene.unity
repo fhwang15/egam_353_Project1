@@ -343,7 +343,7 @@ MonoBehaviour:
   totalTimer: 120
   orderSpawnInterval: 7
   pancakeImage: {fileID: 1248713820}
-  pancakeJumpHeight: 500
+  pancakeJumpHeight: 300
   pancakeJumpSpeed: 50
   noodleImage: {fileID: 1254368047}
   noodleOverlay: {fileID: 78713129}
