@@ -41,6 +41,9 @@ public class GamePlayManager : MonoBehaviour
     private float pancakeRotation = 0f;
     private float pancakeRotationSpeed = 360f; // degrees per second
 
+    private float flipCoolDown = 0f;
+    public float flipCooldownTime = 0.3f;
+
     // NEW: remember last-frame T state (for edge detection)
     private bool wasTPressed = false;
 
@@ -99,6 +102,12 @@ public class GamePlayManager : MonoBehaviour
             return;
         }
 
+        if (flipCoolDown > 0)
+        {
+            flipCoolDown -= Time.deltaTime;
+        }
+
+
         // Pancake UI movement + rotation
         if (pancakeImage != null)
         {
@@ -143,11 +152,13 @@ public class GamePlayManager : MonoBehaviour
             }
 
             // Only count a flip once when transitioning from pressed -> not pressed
-            if (wasTPressed)
+            if (wasTPressed && flipCoolDown <= 0)
             {
                 ProcessPancakeFlip();
                 pancakeRotation = 0f; // optional: restart the spin cycle each counted flip
                 
+                flipCoolDown = flipCooldownTime;
+
                 // Play pancake jump sound
                 PlayPancakeJumpSound();
             }
