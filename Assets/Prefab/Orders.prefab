@@ -34,8 +34,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 13.91732, y: -58}
-  m_SizeDelta: {x: 382.67, y: 50}
+  m_AnchoredPosition: {x: 0.8502, y: -40.3}
+  m_SizeDelta: {x: 576.363, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1003726632675399791
 CanvasRenderer:
@@ -92,8 +92,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 40
+  m_fontSizeBase: 40
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -170,8 +170,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 619.86, y: 196.25}
+  m_AnchoredPosition: {x: 1.704, y: 0}
+  m_SizeDelta: {x: 506.3661, y: 196.25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2856936934766451315
 CanvasRenderer:
@@ -360,8 +360,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 13.917206, y: 0}
-  m_SizeDelta: {x: 382.6658, y: 50}
+  m_AnchoredPosition: {x: 0.8532, y: 31.5}
+  m_SizeDelta: {x: 576.3567, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2700344483883837758
 CanvasRenderer:
@@ -418,8 +418,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 40
+  m_fontSizeBase: 40
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -496,7 +496,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2, y: 57}
+  m_AnchoredPosition: {x: 453, y: 79}
   m_SizeDelta: {x: 358.8314, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4441088518405018420
@@ -514,7 +514,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8582977438706790675}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 

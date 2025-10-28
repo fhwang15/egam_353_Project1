@@ -19,7 +19,7 @@ public class GamePlayManager : MonoBehaviour
     public TextMeshProUGUI timerText;      // Order Timer
 
     private List<Order> activeOrders = new List<Order>();
-    private int maxOrders = 5;
+    private int maxOrders = 4;
     private int totalOrdersCreated = 0;
     private int totalOrdersCompleted = 0;
     private int currentScore = 0;
@@ -91,7 +91,7 @@ public class GamePlayManager : MonoBehaviour
 
         // Game total timer
         totalTimer -= Time.deltaTime;
-        totalTimerText.text = $"Time: {Mathf.Max(0, totalTimer):F1}s";
+        totalTimerText.text = $" {Mathf.Max(0, totalTimer):F1}s";
 
         if (totalTimer <= 0)
         {
@@ -238,7 +238,7 @@ public class GamePlayManager : MonoBehaviour
             Debug.Log($"temperatureController.currentTemp = {temperatureController.currentTemp}");
 
             order.uiTexts[1].text =
-                $"Temp: {order.requiredTemp}\u00B0C (Now: {temperatureController.currentTemp}\u00B0C)";
+                $"{order.requiredTemp}\u00B0C";
 
             // color
             if (Mathf.Abs(tempDiff) <= 0)
