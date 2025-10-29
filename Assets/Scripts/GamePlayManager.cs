@@ -30,6 +30,8 @@ public class GamePlayManager : MonoBehaviour
 
     private bool gameIsOver;
 
+    public bool noodleCanCook;
+
     // pancake animation
     public RectTransform pancakeImage;
     private Vector2 pancakeOriginalPos;
@@ -147,7 +149,7 @@ public class GamePlayManager : MonoBehaviour
             {
                 ProcessPancakeFlip();
                 pancakeRotation = 0f; // optional: restart the spin cycle each counted flip
-                
+
                 // Play pancake jump sound
                 PlayPancakeJumpSound();
             }
@@ -167,13 +169,24 @@ public class GamePlayManager : MonoBehaviour
         // ========= End inverted logic =========
 
         // Noodle cooking input - requires both U and = keys
-        if (Input.GetKey(KeyCode.U) && Input.GetKey(KeyCode.Equals))
+
+        if (Input.GetKey(KeyCode.Equals))
         {
+            noodleCanCook = true;
+        }
+        else
+        {
+            noodleCanCook = false;
+            audioSource.Stop();
+        }
+
+        if (noodleCanCook && Input.GetKey(KeyCode.U))
+        {
+            Debug.Log("lalal");
             ProcessNoodleCooking();
             PlayNoodleCookingSound();
         }
-
-        if (Input.GetKeyUp(KeyCode.Equals))
+        else if (!Input.GetKey(KeyCode.U))
         {
             audioSource.Stop();
         }
